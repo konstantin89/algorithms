@@ -22,17 +22,17 @@ using Maze = std::vector<std::vector<int>>;
 
 constexpr int COST_NOT_VISITED = -1;
 
+struct Cell
+{
+    int x;
+    int y;
+    int cost;
+};
+
 // U - up/down cost
 // V - right/left cost
 int GetShortestPath(Maze maze, int U, int L)
 {
-    struct Cell
-    {
-        int x;
-        int y;
-        int cost;
-    };
-
     auto mazeDim = maze[0].size();
 
     std::vector<std::vector<Cell>> field(mazeDim, std::vector<Cell>(mazeDim));
@@ -48,6 +48,7 @@ int GetShortestPath(Maze maze, int U, int L)
     }
 
     std::queue<Cell> q;
+    field[0][0].cost = 0; // Important! Notice this.
     q.push(field[0][0]);
 
     const std::vector<int> dx = {1, -1, 0 , 0};
@@ -57,27 +58,41 @@ int GetShortestPath(Maze maze, int U, int L)
     {
         Cell cell = q.front();
         q.pop();
-
-        std::cout << cell.x << " " << cell.y << std::endl;
-    
+   
         for (auto i=0; i<dx.size(); i++)
         {
             auto currX = cell.x + dx[i];
             auto currY = cell.y + dy[i];
 
-            if ((currX < mazeDim) && (currX > 0) &&
-                (currY < mazeDim) && (currY > 0) &&
-                (field[currX][currY].cost == COST_NOT_VISITED) &&
+            if ((currX >= 0) && (currX < mazeDim) &&
+                (currY >= 0) && (currY < mazeDim) &&
                 (maze[currX][currY] == 0))
             {
-                q.push(field[currX][currY]);
-                field[currX][currY].cost = dx[i]*U + dy[i]*L;
+                int moveCost = (i<2) ? U : L;
+                int newCost = cell.cost + moveCost;
+
+                if ((field[currX][currY].cost == COST_NOT_VISITED) ||
+                    (field[currX][currY].cost > newCost))
+                {
+                    field[currX][currY].cost = newCost;
+                    q.push(field[currX][currY]);
+                }
             }
         }
     }
 
-
     return field[mazeDim-1][mazeDim-1].cost;
+}
+
+void RunMaze(Maze maze, int U, int L)
+{
+    int result = GetShortestPath(maze, U, L);
+
+    if (result != -1)
+        std::cout << "Minimum Cost to Reach the Destination: " << result << std::endl;
+    else
+        std::cout << "No path exists." << std::endl;
+
 }
 
 int main() 
@@ -90,15 +105,9 @@ int main()
         {0, 0, 0, 0, 0}
     };
 
-    int U = 2; // Cost of moving up or down
-    int L = 1; // Cost of moving left or right
+    RunMaze(maze, 2, 1);
 
-    int result = GetShortestPath(maze, U, L);
-
-    if (result != -1)
-        std::cout << "Minimum Cost to Reach the Destination: " << result << std::endl;
-    else
-        std::cout << "No path exists." << std::endl;
+    RunMaze(maze, 1, 1);
 
     return 0;
 }
